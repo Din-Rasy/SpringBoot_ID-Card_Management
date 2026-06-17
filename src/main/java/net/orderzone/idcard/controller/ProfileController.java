@@ -205,7 +205,7 @@ public class ProfileController {
 
     @PostMapping("/profiles/{id}/delete")
     public String deleteProfile(@PathVariable Long id) {
-        profileService.delete(id);
+        profileService.deleteProfile(id);
         return "redirect:/profiles";
     }
 

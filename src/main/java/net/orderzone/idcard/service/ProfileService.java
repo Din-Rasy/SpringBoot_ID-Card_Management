@@ -122,7 +122,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void deleteProfile(Long id) {
         Profile existing = profileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Profile not found with ID: " + id));
         

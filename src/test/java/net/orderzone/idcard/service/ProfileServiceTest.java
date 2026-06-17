@@ -76,7 +76,7 @@ public class ProfileServiceTest {
         Profile saved = profileService.create(profile);
         Long id = saved.getId();
 
-        profileService.delete(id);
+        profileService.deleteProfile(id);
 
         Optional<Profile> found = profileService.getById(id);
         assertFalse(found.isPresent());

@@ -58,7 +58,7 @@
                         <td style="text-align: right;">
                             <div style="display: inline-flex; gap: 0.5rem;">
                                 <a th:href="@{/profiles/{id}(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">View</a>
-                                <a th:href="@{/profiles/{id}/card}(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Card</a>
+                                <a th:href="@{/profiles/{id}/card(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Card</a>
                                 <a th:href="@{/profiles/{id}/pdf(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #eff6ff; border-color: #bfdbfe; color: #1e40af;">PDF</a>
                                 <a th:href="@{/profiles/{id}/edit(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #fffbeb; border-color: #fef3c7; color: #b45309;">Edit</a>
                                 <form th:action="@{/profiles/{id}/delete(id=${profile.id})}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this profile?');">

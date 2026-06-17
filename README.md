@@ -96,3 +96,51 @@ Initialize and upload this project to your GitHub repository using manual Git co
    ```bash
    git push -u origin main
    ```
+
+## Docker Compose & Kubernetes Deployment
+
+This project supports deployment via **Docker Compose** and **Kubernetes**.
+
+### Configuration Parameters
+- **Deployment Choice:** Docker Compose
+- **Database Engine:** MySQL 8.0
+- **Database Name:** `A-DIN_Rasy-db`
+- **Username:** `root`
+- **Password:** `Hello@123`
+- **Exposed Host Ports:**
+  - **Web Application / NGINX Proxy:** `8443` -> `8080` (Internal NGINX) -> `8081` (Internal Spring Boot)
+  - **SSH Daemon:** `2222` -> `22` (Internal OpenSSH)
+
+### 1. Docker Compose Deployment
+
+#### Run Command
+To build and start both the `web` and `mysql` containers:
+```bash
+docker compose up --build
+```
+
+#### Verification URL
+Once started, the website is accessible at:
+- **URL:** [http://localhost:8443/profiles](http://localhost:8443/profiles)
+
+#### Accessing Container Services
+- **SSH Command:** `ssh root@localhost -p 2222` (Password: `Hello@123`)
+- **PHP CLI Modules Check:** `docker exec web-app php -m`
+- **MySQL Tables Check:** `docker exec mysql-db mysql -uroot -pHello@123 -e "show tables;" A-DIN_Rasy-db`
+
+### 2. Kubernetes Deployment
+
+The equivalent Kubernetes manifests are defined in [kubernetes.yaml](file:///e:/Year4-GIC-ITC/DevOps/final_exam/kubernetes.yaml).
+
+#### Deploy Commands
+To apply the namespace, PersistentVolumeClaim, deployments, and services:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+### Required Submission Screenshots
+1. Running containers output (`docker ps`).
+2. Browser page showing profile management loaded on `http://localhost:8443/profiles`.
+3. MySQL CLI output showing the existence of `A-DIN_Rasy-db` and its tables.
+4. SSH connection command and prompt showing root access to the `web-app` container on port 2222.
+

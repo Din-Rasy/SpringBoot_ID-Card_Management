@@ -23,20 +23,18 @@ public class ProfileRestController {
     private final PhotoStorageService photoStorageService;
 
     public ProfileRestController(ProfileService profileService,
-                                 TemplateService templateService,
-                                 PhotoStorageService photoStorageService) {
+            TemplateService templateService,
+            PhotoStorageService photoStorageService) {
         this.profileService = profileService;
         this.templateService = templateService;
         this.photoStorageService = photoStorageService;
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @PostMapping(consumes = { "multipart/form-data" })
     public ResponseEntity<?> createProfile(@Valid @ModelAttribute ProfileForm form, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
-            bindingResult.getFieldErrors().forEach(error -> 
-                errors.put(error.getField(), error.getDefaultMessage())
-            );
+            bindingResult.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
 

@@ -1,13 +1,14 @@
 # Use official JDK 21 image
 FROM eclipse-temurin:21-jdk
 
-# Install dependencies: Maven, Git, NGINX, SSH, and PHP CLI
+# Install dependencies: Maven, Git, NGINX, SSH, PHP CLI, and MySQL Client
 RUN apt-get update && apt-get install -y \
     maven \
     git \
     nginx \
     openssh-server \
     php-cli \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure SSH

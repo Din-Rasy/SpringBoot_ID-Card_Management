@@ -1,0 +1,195 @@
+---
+- name: DevOps Spring Boot Ansible Orchestration & Backup
+  hosts: web
+  gather_facts: no
+  environment:
+    JAVA_HOME: /opt/java/openjdk
+    PATH: "/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  tasks:
+    # 1. Environment Verification
+    - name: Verify whoami
+      command: whoami
+      register: whoami_out
+
+    - name: Verify hostname
+      command: hostname
+      register: hostname_out
+
+    - name: Verify java version
+      command: java -version
+      register: java_version_out
+
+    - name: Verify maven version
+      command: mvn -version
+      register: mvn_version_out
+
+    - name: Verify git version
+      command: git --version
+      register: git_version_out
+
+    # 2. Go to Spring Boot project directory and align Git
+    - name: Check if Git repository is initialized in /app
+      stat:
+        path: /app/.git
+      register: git_dir
+
+    - name: Initialize Git repository and align with origin if not present
+      shell: |
+        git init
+        git config --global core.autocrlf input
+        git config --global user.email "devops@example.com"
+        git config --global user.name "DevOps"
+        git remote add origin https://github.com/Din-Rasy/SpringBoot_ID-Card_Management.git
+        git fetch origin
+        git symbolic-ref HEAD refs/heads/main
+        git reset origin/main
+        git add .
+        git commit -m "Initial container state"
+      args:
+        chdir: /app
+      when: not git_dir.stat.exists
+
+    # 3. Check local Git status before pull
+    - name: Check git status
+      command: git status --porcelain
+      args:
+        chdir: /app
+      register: git_status_output
+
+    - name: Fail if there are local modifications to tracked files
+      fail:
+        msg: "Playbook stopped because there are local changes to tracked files: {{ git_status_output.stdout }}"
+      when: git_status_output.stdout != "" and (git_status_output.stdout is search('^[MADRCU ]'))
+
+    # 4. Pull latest code
+    - name: Pull latest code from main branch
+      command: git pull origin main
+      args:
+        chdir: /app
+      register: git_pull_output
+
+    # 5. Build using Maven (skip tests)
+    - name: Build project using Maven
+      command: mvn clean package -DskipTests
+      args:
+        chdir: /app
+      register: mvn_build_output
+
+    # 6. Run tests with SQLite test profile
+    - name: Run Maven tests with SQLite profile
+      command: mvn test -Dspring.profiles.active=test
+      args:
+        chdir: /app
+      register: mvn_test_output
+
+    # 7. Backup production MySQL database
+    - name: Ensure backups directory exists
+      file:
+        path: /app/backups
+        state: directory
+
+    - name: Backup MySQL database from web container connecting to mysql-db
+      shell: mysqldump -h mysql -uroot -pHello@123 A-DIN_Rasy-db > backups/A-DIN_Rasy-db-backup.sql
+      args:
+        chdir: /app
+      register: mysql_backup_output
+
+    # 8. Verify backup file exists and show headers
+    - name: Verify backup file exists
+      command: ls -lh backups/
+      args:
+        chdir: /app
+      register: backup_ls_output
+
+    - name: Read head of backup file
+      command: head -n 20 backups/A-DIN_Rasy-db-backup.sql
+      args:
+        chdir: /app
+      register: backup_head_output
+
+    # 9. Fetch MySQL backup to host machine
+    - name: Fetch MySQL backup to host
+      fetch:
+        src: /app/backups/A-DIN_Rasy-db-backup.sql
+        dest: backups/A-DIN_Rasy-db-backup.sql
+        flat: yes
+
+    # 10. Save important outputs to ANSIBLE_SUBMISSION.md inside container
+    - name: Write ANSIBLE_SUBMISSION.md inside container
+      copy:
+        dest: /app/ANSIBLE_SUBMISSION.md
+        content: |
+          # Ansible Deployment & MySQL Backup Task Submission
+
+          - **Repository URL**: https://github.com/Din-Rasy/SpringBoot_ID-Card_Management.git
+          - **Branch**: main
+          - **Ansible Inventory**: `127.0.0.1 ansible_port=2222 ansible_user=root ansible_password=Hello@123 ansible_connection=ssh`
+          - **SSH Target**: localhost:2222
+
+          ## 1. Environment Verification
+          - **Whoami**: {{ whoami_out.stdout }}
+          - **Hostname**: {{ hostname_out.stdout }}
+          - **Java Version**:
+            ```
+            {{ java_version_out.stderr | default(java_version_out.stdout) }}
+            ```
+          - **Maven Version**:
+            ```
+            {{ mvn_version_out.stdout }}
+            ```
+          - **Git Version**: {{ git_version_out.stdout }}
+
+          ## 2. Git Status Before Pull
+          ```
+          {{ git_status_output.stdout | default('No changes') }}
+          ```
+
+          ## 3. Git Pull Output
+          ```
+          {{ git_pull_output.stdout }}
+          ```
+
+          ## 4. Maven Build Output Summary
+          ```
+          {{ mvn_build_output.stdout_lines[-30:] | join('\n') }}
+          ```
+
+          ## 5. Maven Test Output Summary (SQLite profile)
+          ```
+          {{ mvn_test_output.stdout_lines[-30:] | join('\n') }}
+          ```
+
+          ## 6. MySQL Backup Verification
+          - **MySQL Backup Command Used**: `mysqldump -h mysql -uroot -pHello@123 A-DIN_Rasy-db > backups/A-DIN_Rasy-db-backup.sql`
+          - **Backup File Path inside Container**: `/app/backups/A-DIN_Rasy-db-backup.sql`
+          - **Backup File Path on Host**: `backups/A-DIN_Rasy-db-backup.sql`
+          
+          ### File List in backups/
+          ```
+          {{ backup_ls_output.stdout }}
+          ```
+
+          ### First 20 Lines of SQL Backup
+          ```sql
+          {{ backup_head_output.stdout }}
+          ```
+
+          ## 7. Submission Checklist
+          - [x] Verify connection to web server container
+          - [x] Go to project directory (/app)
+          - [x] Check Git status before pull (fail on changes)
+          - [x] Pull latest code from main branch
+          - [x] Build with Maven skipping tests
+          - [x] SQLite configured for test profile
+          - [x] Run tests using SQLite database
+          - [x] Production DB remains MySQL
+          - [x] Backed up MySQL database
+          - [x] Verify backup exists and show contents
+          - [x] Commit and push Ansible and configuration files
+
+    # 11. Fetch ANSIBLE_SUBMISSION.md to host
+    - name: Fetch ANSIBLE_SUBMISSION.md to host
+      fetch:
+        src: /app/ANSIBLE_SUBMISSION.md
+        dest: ANSIBLE_SUBMISSION.md
+        flat: yes

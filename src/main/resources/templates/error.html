@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Error', ~{::content}, '')}">
+<body>
+    <div th:fragment="content">
+        <div class="card" style="text-align: center; max-width: 600px; margin: 4rem auto; padding: 3rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: #ef4444; margin-bottom: 1rem;">An Error Occurred</h1>
+            
+            <p style="color: var(--text-muted); margin-bottom: 2rem;" 
+               th:text="${message != null} ? ${message} : 'An unexpected server error occurred. Please try again or contact support.'">
+               Unexpected error details here.
+            </p>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a th:href="@{/}" class="btn btn-primary">Go to Dashboard</a>
+                <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

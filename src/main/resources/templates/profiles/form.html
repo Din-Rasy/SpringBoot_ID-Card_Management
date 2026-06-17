@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(${form.id == null ? 'New Profile' : 'Edit Profile'}, ~{::content}, 'profiles')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${form.id == null ? 'Register Profile' : 'Edit Profile'}">Register Profile</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Fill out the profile details. Card previews will adjust live.</p>
+            </div>
+            <div>
+                <a th:href="@{/profiles}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div th:if="${error != null}" class="card" style="background-color: #fef2f2; border-color: #fca5a5; color: #b91c1c; padding: 1rem; margin-bottom: 1.5rem;">
+            <p th:text="${error}"></p>
+        </div>
+
+        <div class="preview-container">
+            <!-- Form Card -->
+            <div class="card preview-form" style="margin-bottom: 0;">
+                <form th:action="${form.id == null ? '/profiles' : '/profiles/' + form.id}" 
+                      method="post" th:object="${form}" enctype="multipart/form-data">
+                    <input type="hidden" th:field="*{id}">
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="fullName">Full Name *</label>
+                            <input type="text" th:field="*{fullName}" id="fullName" class="form-control" required placeholder="e.g. John Doe">
+                            <div class="error-message" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="type">Profile Type *</label>
+                            <select th:field="*{type}" id="type" class="form-control" required>
+                                <option value="" disabled selected>-- Select Type --</option>
+                                <option th:each="t : ${profileTypes}" th:value="${t}" th:text="${t}">STUDENT</option>
+                            </select>
+                            <div class="error-message" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></div>
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="department">Department</label>
+                            <input type="text" th:field="*{department}" id="department" class="form-control" placeholder="e.g. IT, HR, sales">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="title">Title / Class</label>
+                            <input type="text" th:field="*{title}" id="title" class="form-control" placeholder="e.g. Developer, Year 4">
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" th:field="*{email}" id="email" class="form-control" placeholder="e.g. john@company.com">
+                            <div class="error-message" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Phone</label>
+                            <input type="text" th:field="*{phone}" id="phone" class="form-control" placeholder="e.g. +855 12 345 678">
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="bloodGroup">Blood Group</label>
+                            <input type="text" th:field="*{bloodGroup}" id="bloodGroup" class="form-control" placeholder="e.g. A+, B-, O+">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="dateOfBirth">Date of Birth</label>
+                            <input type="date" th:field="*{dateOfBirth}" id="dateOfBirth" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="issueDate">Issue Date</label>
+                            <input type="date" th:field="*{issueDate}" id="issueDate" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="expiryDate">Expiry Date</label>
+                            <input type="date" th:field="*{expiryDate}" id="expiryDate" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="templateId">Card Theme</label>
+                            <select th:field="*{templateId}" id="templateId" class="form-control">
+                                <option value="" th:data-primary="'#374151'" th:data-secondary="'#f3f4f6'" th:data-text="'#111827'" th:data-layout="'VERTICAL'" th:data-org="'ORGANIZATION'">-- Default Theme --</option>
+                                <option th:each="t : ${templates}" 
+                                        th:value="${t.id}" 
+                                        th:text="${t.name}"
+                                        th:data-primary="${t.primaryColor}"
+                                        th:data-secondary="${t.secondaryColor}"
+                                        th:data-text="${t.textColor}"
+                                        th:data-layout="${t.layout}"
+                                        th:data-org="${t.organizationName}"
+                                        th:data-tagline="${t.tagline}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="barcodeType">Barcode Type</label>
+                            <select th:field="*{barcodeType}" id="barcodeType" class="form-control">
+                                <option th:each="bt : ${barcodeTypes}" th:value="${bt}" th:text="${bt}">CODE_128</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="columns-2">
+                        <div class="form-group">
+                            <label class="form-label" for="registrationNumber">Reg Number (Leave blank to auto-generate)</label>
+                            <input type="text" th:field="*{registrationNumber}" id="registrationNumber" class="form-control" placeholder="e.g. 2026-IT-001">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="photoFile">Photo Upload (JPEG/PNG, Max 2MB)</label>
+                            <input type="file" name="photoFile" id="photoFile" class="form-control" accept="image/jpeg,image/png">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary" th:text="${form.id == null ? 'Save Profile' : 'Update Profile'}">Save Profile</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Live Card Preview Card -->
+            <div style="flex-basis: 340px; display: flex; flex-direction: column; align-items: center; position: sticky; top: 2.5rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: var(--text-muted);">LIVE CARD PREVIEW</h3>
+                
+                <div class="id-card-wrap">
+                    <div id="previewIdCard" class="id-card layout-vertical">
+                        
+                        <!-- Header -->
+                        <div class="card-header" style="background-color: #1d4ed8;">
+                            <h2 class="org-name-text">NATIONAL UNIVERSITY</h2>
+                            <p class="tagline-text" style="font-size: 0.55rem; margin-top: 0.1rem;">Excellence in Education</p>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <img id="previewPhotoImg" class="profile-photo" th:src="@{/css/placeholder.jpg}" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='105' viewBox='0 0 90 105'><rect width='90' height='105' fill='%23cbd5e1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23475569'>Photo</text></svg>" alt="Photo">
+                            
+                            <div class="profile-name preview-name">FULL NAME</div>
+                            <div class="profile-title preview-title-dept">Title - GEN</div>
+
+                            <div class="profile-details">
+                                <div class="detail-label">Reg No:</div>
+                                <div class="detail-val preview-reg">AUTO</div>
+
+                                <div class="detail-label">Type:</div>
+                                <div class="detail-val preview-type">USER</div>
+
+                                <div class="detail-label">Email:</div>
+                                <div class="detail-val preview-email">-</div>
+
+                                <div class="detail-label">Phone:</div>
+                                <div class="detail-val preview-phone">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer">
+                            <div class="qr-code">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #64748b;">
+                                    <rect x="2" y="2" width="6" height="6"></rect>
+                                    <rect x="2" y="16" width="6" height="6"></rect>
+                                    <rect x="16" y="2" width="6" height="6"></rect>
+                                    <rect x="16" y="16" width="6" height="6"></rect>
+                                </svg>
+                            </div>
+                            <div class="barcode-area">
+                                <div class="barcode-img" style="background-color: #e2e8f0; display: flex; align-items: center; justify-content: center;">
+                                    <div style="letter-spacing: 2px; font-family: monospace; font-size: 0.55rem; color: #475569;">|||| | ||||</div>
+                                </div>
+                                <div class="barcode-text preview-reg">2026-GEN-000</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Javascript to manage live preview -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const inputs = ['fullName', 'department', 'title', 'type', 'email', 'phone', 'registrationNumber', 'templateId', 'barcodeType'];
+                
+                inputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', updatePreview);
+                        el.addEventListener('change', updatePreview);
+                    }
+                });
+
+                // File Reader for photo uploading
+                const photoInput = document.getElementById('photoFile');
+                photoInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('previewPhotoImg').src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                function updatePreview() {
+                    const templateSelect = document.getElementById('templateId');
+                    const nameInput = document.getElementById('fullName');
+                    const deptInput = document.getElementById('department');
+                    const titleInput = document.getElementById('title');
+                    const typeSelect = document.getElementById('type');
+                    const emailInput = document.getElementById('email');
+                    const phoneInput = document.getElementById('phone');
+                    const regInput = document.getElementById('registrationNumber');
+
+                    // Extract template details
+                    const option = templateSelect.options[templateSelect.selectedIndex];
+                    const primary = option.getAttribute('data-primary') || '#1d4ed8';
+                    const secondary = option.getAttribute('data-secondary') || '#e0e7ff';
+                    const text = option.getAttribute('data-text') || '#111827';
+                    const layout = option.getAttribute('data-layout') || 'VERTICAL';
+                    const org = option.getAttribute('data-org') || 'ORGANIZATION';
+                    const tagline = option.getAttribute('data-tagline') || '';
+
+                    // Main card shell
+                    const card = document.getElementById('previewIdCard');
+                    if (layout === 'HORIZONTAL') {
+                        card.className = 'id-card layout-horizontal';
+                        
+                        // Render horizontal specific structures inside body if needed, or update styles dynamically
+                        // To support horizontal card, we adjust inner styles
+                    } else {
+                        card.className = 'id-card layout-vertical';
+                    }
+
+                    // Apply styles
+                    card.style.backgroundColor = secondary;
+                    card.style.color = text;
+                    
+                    const header = card.querySelector('.card-header');
+                    header.style.backgroundColor = primary;
+                    
+                    const orgText = card.querySelector('.org-name-text');
+                    orgText.innerText = org.toUpperCase();
+                    
+                    const tagText = card.querySelector('.tagline-text');
+                    if (tagline) {
+                        tagText.innerText = tagline;
+                        tagText.style.display = 'block';
+                    } else {
+                        tagText.style.display = 'none';
+                    }
+
+                    // Text fields
+                    card.querySelector('.preview-name').innerText = nameInput.value || 'FULL NAME';
+                    
+                    // Defaults based on selection type
+                    let defaultTitle = 'Title';
+                    if (typeSelect.value) {
+                        defaultTitle = typeSelect.value.charAt(0) + typeSelect.value.slice(1).toLowerCase();
+                    }
+                    const titleVal = titleInput.value || defaultTitle;
+                    const deptVal = deptInput.value || 'GEN';
+                    
+                    card.querySelector('.preview-title-dept').innerText = titleVal + ' - ' + deptVal;
+                    
+                    const regVal = regInput.value || 'AUTO';
+                    const allRegs = card.querySelectorAll('.preview-reg');
+                    allRegs.forEach(el => el.innerText = regVal);
+                    
+                    card.querySelector('.preview-type').innerText = typeSelect.value || 'USER';
+                    card.querySelector('.preview-email').innerText = emailInput.value || '-';
+                    card.querySelector('.preview-phone').innerText = phoneInput.value || '-';
+                }
+
+                // Run once on load
+                updatePreview();
+            });
+        </script>
+    </div>
+</body>
+</html>

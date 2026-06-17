@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Profiles', ~{::content}, 'profiles')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Profiles</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Manage registration cards and themes.</p>
+            </div>
+            <div>
+                <a th:href="@{/profiles/new}" class="btn btn-primary">+ Register Profile</a>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+            <form th:action="@{/profiles}" method="get" style="display: flex; gap: 0.75rem; align-items: center;">
+                <div style="flex-grow: 1; position: relative;">
+                    <input type="text" name="keyword" th:value="${keyword}" placeholder="Search profiles by name, registration number, department, or email..." class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a th:href="@{/profiles}" class="btn btn-secondary" th:if="${keyword != null && !keyword.isEmpty()}">Clear</a>
+            </form>
+        </div>
+
+        <!-- Profiles Table -->
+        <div class="table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Photo</th>
+                        <th>Reg Number</th>
+                        <th>Full Name</th>
+                        <th>Type</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                        <th style="text-align: right; width: 340px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="profile : ${profiles}">
+                        <td>
+                            <img th:if="${profile.hasPhoto()}" th:src="@{/uploads/photos/{file}(file=${profile.photoFileName})}" class="avatar" alt="Photo">
+                            <div th:unless="${profile.hasPhoto()}" class="avatar" style="display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-color: #cbd5e1; color: #475569;">
+                                N/A
+                            </div>
+                        </td>
+                        <td>
+                            <strong th:text="${profile.registrationNumber}">2026-IT-001</strong>
+                        </td>
+                        <td th:text="${profile.fullName}">John Doe</td>
+                        <td>
+                            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(profile.type)}" th:text="${profile.type}">STUDENT</span>
+                        </td>
+                        <td th:text="${profile.department != null && !profile.department.isEmpty()} ? ${profile.department} : 'GEN'">IT</td>
+                        <td th:text="${profile.email != null && !profile.email.isEmpty()} ? ${profile.email} : '-'">john@example.com</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 0.5rem;">
+                                <a th:href="@{/profiles/{id}(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">View</a>
+                                <a th:href="@{/profiles/{id}/card}(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Card</a>
+                                <a th:href="@{/profiles/{id}/pdf(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #eff6ff; border-color: #bfdbfe; color: #1e40af;">PDF</a>
+                                <a th:href="@{/profiles/{id}/edit(id=${profile.id})}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #fffbeb; border-color: #fef3c7; color: #b45309;">Edit</a>
+                                <form th:action="@{/profiles/{id}/delete(id=${profile.id})}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this profile?');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(profiles)}">
+                        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            No profiles registered yet. <a th:href="@{/profiles/new}">Register a new profile</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

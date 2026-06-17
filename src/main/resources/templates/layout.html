@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, activeLink)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - ID Card System'"></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+    <div class="sidebar">
+        <a th:href="@{/}" class="brand">
+            <div class="brand-icon">ID</div>
+            <span>Card Manager</span>
+        </a>
+        <ul class="nav-menu">
+            <li>
+                <a th:href="@{/}" class="nav-link" th:classappend="${activeLink == 'dashboard' ? 'active' : ''}">
+                    <span class="icon">📊</span> Dashboard
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/profiles}" class="nav-link" th:classappend="${activeLink == 'profiles' ? 'active' : ''}">
+                    <span class="icon">👥</span> Profiles
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/templates}" class="nav-link" th:classappend="${activeLink == 'templates' ? 'active' : ''}">
+                    <span class="icon">🎨</span> Templates
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/batch}" class="nav-link" th:classappend="${activeLink == 'batch' ? 'active' : ''}">
+                    <span class="icon">⚙️</span> Batch Generation
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div th:replace="${content}">
+            <!-- Page Content -->
+        </div>
+    </div>
+</body>
+</html>

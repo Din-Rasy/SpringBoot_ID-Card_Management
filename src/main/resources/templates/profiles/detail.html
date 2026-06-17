@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Profile Detail', ~{::content}, 'profiles')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${profile.fullName}">John Doe</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Registration Details & ID Card Preview</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a th:href="@{/profiles/{id}/pdf(id=${profile.id})}" class="btn btn-primary">Download PDF</a>
+                <a th:href="@{/profiles/{id}/edit(id=${profile.id})}" class="btn btn-secondary" style="background-color: #fffbeb; border-color: #fef3c7; color: #b45309;">Edit</a>
+                <a th:href="@{/profiles}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <!-- Details Card -->
+            <div class="card" style="flex: 1; margin-bottom: 0; padding: 2rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    Registration Profile Information
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted); width: 200px;">Registration Number:</td>
+                        <td style="padding: 0.75rem 0;"><strong th:text="${profile.registrationNumber}">2026-IT-001</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">UUID (Verification Link):</td>
+                        <td style="padding: 0.75rem 0;">
+                            <code th:text="${profile.uuid}">uuid-string-here</code>
+                            <a th:href="@{/verify/{uuid}(uuid=${profile.uuid})}" target="_blank" style="margin-left: 0.75rem; font-size: 0.8rem; color: var(--accent); text-decoration: none;">(Open Verification Page)</a>
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Profile Type:</td>
+                        <td style="padding: 0.75rem 0;">
+                            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(profile.type)}" th:text="${profile.type}">STUDENT</span>
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Department:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.department != null && !profile.department.isEmpty()} ? ${profile.department} : 'GEN'">IT</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Job Title / Class:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.title}">Student</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Email Address:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.email != null && !profile.email.isEmpty()} ? ${profile.email} : '-'">john@company.com</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Phone Number:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.phone != null && !profile.phone.isEmpty()} ? ${profile.phone} : '-'">+855 12 345 678</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Blood Group:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.bloodGroup != null && !profile.bloodGroup.isEmpty()} ? ${profile.bloodGroup} : '-'">A+</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Date of Birth:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.dateOfBirth != null} ? ${profile.dateOfBirth} : '-'">1990-01-01</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Issued / Expiry:</td>
+                        <td style="padding: 0.75rem 0;">
+                            <span th:text="${profile.issueDate}">2026-06-17</span> to <span th:text="${profile.expiryDate}">2027-06-17</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem 0; font-weight: 600; color: var(--text-muted);">Theme Applied:</td>
+                        <td style="padding: 0.75rem 0;" th:text="${profile.template != null} ? ${profile.template.name} : 'Default Theme'">Student Blue</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Card Design Rendering -->
+            <div style="flex-basis: 340px; display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: var(--text-muted);">GENERATED ID CARD</h3>
+                
+                <div class="id-card-wrap">
+                    <div id="cardShell" class="id-card" 
+                         th:classappend="${profile.template != null && #strings.toUpperCase(profile.template.layout) == 'HORIZONTAL'} ? 'layout-horizontal' : 'layout-vertical'"
+                         th:style="'background-color: ' + ${profile.template != null ? profile.template.secondaryColor : '#e0e7ff'} + '; color: ' + ${profile.template != null ? profile.template.textColor : '#111827'} + ';'">
+                        
+                        <!-- VERTICAL LAYOUT STRUCTURE -->
+                        <th:block th:if="${profile.template == null || #strings.toUpperCase(profile.template.layout) != 'HORIZONTAL'}">
+                            <!-- Header -->
+                            <div class="card-header" th:style="'background-color: ' + ${profile.template != null ? profile.template.primaryColor : '#1d4ed8'} + ';'">
+                                <h2 class="org-name-text" th:text="${profile.template != null && profile.template.organizationName != null} ? ${#strings.toUpperCase(profile.template.organizationName)} : 'ORGANIZATION'">NATIONAL UNIVERSITY</h2>
+                                <p class="tagline-text" th:if="${profile.template != null && profile.template.tagline != null && !profile.template.tagline.isEmpty()}" th:text="${profile.template.tagline}">Excellence in Education</p>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <img class="profile-photo" th:if="${profile.hasPhoto()}" th:src="@{/uploads/photos/{file}(file=${profile.photoFileName})}" alt="Photo">
+                                <div class="profile-photo" th:unless="${profile.hasPhoto()}" style="display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-color: #cbd5e1; color: #475569; width: 90px; height: 105px;">
+                                    NO PHOTO
+                                </div>
+                                
+                                <div class="profile-name" th:text="${profile.fullName}">John Doe</div>
+                                <div class="profile-title" th:text="${profile.title} + (${profile.department != null && !profile.department.isEmpty()} ? ' - ' + ${profile.department} : '')">Student - IT</div>
+
+                                <div class="profile-details">
+                                    <div class="detail-label">Reg No:</div>
+                                    <div class="detail-val" th:text="${profile.registrationNumber}">2026-IT-001</div>
+
+                                    <div class="detail-label">Type:</div>
+                                    <div class="detail-val" th:text="${profile.type}">STUDENT</div>
+
+                                    <div class="detail-label" th:if="${profile.email != null && !profile.email.isEmpty()}">Email:</div>
+                                    <div class="detail-val" th:if="${profile.email != null && !profile.email.isEmpty()}" th:text="${profile.email}">john@univ.edu</div>
+
+                                    <div class="detail-label" th:if="${profile.phone != null && !profile.phone.isEmpty()}">Phone:</div>
+                                    <div class="detail-val" th:if="${profile.phone != null && !profile.phone.isEmpty()}" th:text="${profile.phone}">+855 12 345</div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="card-footer">
+                                <div class="qr-code">
+                                    <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" style="width: 100%; height: 100%;" alt="QR Code">
+                                </div>
+                                <div class="barcode-area">
+                                    <img class="barcode-img" th:src="'data:image/png;base64,' + ${barcodeBase64}" alt="Barcode">
+                                    <div class="barcode-text" th:text="${profile.registrationNumber}">2026-IT-001</div>
+                                </div>
+                            </div>
+                        </th:block>
+
+                        <!-- HORIZONTAL LAYOUT STRUCTURE -->
+                        <th:block th:if="${profile.template != null && #strings.toUpperCase(profile.template.layout) == 'HORIZONTAL'}">
+                            <!-- Header -->
+                            <div class="card-header" th:style="'background-color: ' + ${profile.template.primaryColor} + ';'">
+                                <h2 class="org-name-text" th:text="${#strings.toUpperCase(profile.template.organizationName)}">ORGANIZATION</h2>
+                                <p class="tagline-text" th:if="${profile.template.tagline != null && !profile.template.tagline.isEmpty()}" th:text="${profile.template.tagline}">Tagline</p>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <img class="profile-photo" th:if="${profile.hasPhoto()}" th:src="@{/uploads/photos/{file}(file=${profile.photoFileName})}" alt="Photo">
+                                <div class="profile-photo" th:unless="${profile.hasPhoto()}" style="display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-color: #cbd5e1; color: #475569; width: 80px; height: 95px;">
+                                    NO PHOTO
+                                </div>
+
+                                <div class="profile-info">
+                                    <div class="profile-name" th:text="${profile.fullName}">John Doe</div>
+                                    <div class="profile-title" th:text="${profile.title} + (${profile.department != null && !profile.department.isEmpty()} ? ' - ' + ${profile.department} : '')">Title - Department</div>
+                                    
+                                    <div class="profile-details">
+                                        <div class="detail-label">Reg No:</div>
+                                        <div class="detail-val" th:text="${profile.registrationNumber}">2026-IT-001</div>
+
+                                        <div class="detail-label">Type:</div>
+                                        <div class="detail-val" th:text="${profile.type}">STUDENT</div>
+
+                                        <div class="detail-label" th:if="${profile.email != null && !profile.email.isEmpty()}">Email:</div>
+                                        <div class="detail-val" th:if="${profile.email != null && !profile.email.isEmpty()}" th:text="${profile.email}">john@univ.edu</div>
+                                    </div>
+                                </div>
+
+                                <div class="right-codes">
+                                    <div class="qr-code">
+                                        <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" style="width: 100%; height: 100%;" alt="QR Code">
+                                    </div>
+                                    <div class="barcode-area">
+                                        <img class="barcode-img" th:src="'data:image/png;base64,' + ${barcodeBase64}" alt="Barcode">
+                                        <div class="barcode-text" th:text="${profile.registrationNumber}">2026-IT-001</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

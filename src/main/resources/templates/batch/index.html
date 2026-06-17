@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Batch Generation', ~{::content}, 'batch')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Batch Card Generation</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Generate and export multiple ID cards to a single merged PDF file.</p>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 900px;">
+            <form th:action="@{/batch/pdf}" method="post" th:object="${batchRequest}">
+                
+                <!-- Batch Mode Selection -->
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 1rem; margin-bottom: 0.75rem;">Select Export Mode</label>
+                    <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                            <input type="radio" th:field="*{batchMode}" value="SELECTED" checked id="modeSelected"> Selected Profiles
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                            <input type="radio" th:field="*{batchMode}" value="TYPE" id="modeType"> By Profile Type
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                            <input type="radio" th:field="*{batchMode}" value="DEPARTMENT" id="modeDept"> By Department
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 1. Selection Options: By Type -->
+                <div id="sectionType" class="form-group" style="display: none; max-width: 400px; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); background-color: #f8fafc;">
+                    <label class="form-label" for="typeSelect">Choose Profile Type</label>
+                    <select th:field="*{type}" id="typeSelect" class="form-control">
+                        <option th:each="t : ${profileTypes}" th:value="${t}" th:text="${t}">STUDENT</option>
+                    </select>
+                </div>
+
+                <!-- 2. Selection Options: By Department -->
+                <div id="sectionDept" class="form-group" style="display: none; max-width: 400px; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); background-color: #f8fafc;">
+                    <label class="form-label" for="deptSelect">Choose Department</label>
+                    <select th:field="*{department}" id="deptSelect" class="form-control">
+                        <option value="" disabled selected>-- Select Department --</option>
+                        <option th:each="d : ${departments}" th:value="${d}" th:text="${d}">IT</option>
+                    </select>
+                </div>
+
+                <!-- 3. Selection Options: Table checkboxes -->
+                <div id="sectionSelected" class="form-group" style="border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden;">
+                    <div style="background-color: #f8fafc; padding: 0.75rem 1.25rem; font-weight: 600; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <span>Select Profiles to Include</span>
+                        <label style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                            <input type="checkbox" id="selectAll"> Select All
+                        </label>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="custom-table" style="border: none;">
+                            <thead>
+                                <tr style="display: none;">
+                                    <th>Select</th>
+                                    <th>Reg Number</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Department</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="profile : ${profiles}">
+                                    <td style="width: 50px; text-align: center;">
+                                        <input type="checkbox" name="selectedIds" th:value="${profile.id}" class="profile-checkbox">
+                                    </td>
+                                    <td>
+                                        <strong th:text="${profile.registrationNumber}">2026-IT-001</strong>
+                                    </td>
+                                    <td th:text="${profile.fullName}">John Doe</td>
+                                    <td>
+                                        <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(profile.type)}" th:text="${profile.type}">STUDENT</span>
+                                    </td>
+                                    <td th:text="${profile.department != null && !profile.department.isEmpty()} ? ${profile.department} : 'GEN'">IT</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(profiles)}">
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                        No profiles available. Create a profile first.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                        📥 Generate & Download PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const modeSelected = document.getElementById('modeSelected');
+                const modeType = document.getElementById('modeType');
+                const modeDept = document.getElementById('modeDept');
+
+                const sectionSelected = document.getElementById('sectionSelected');
+                const sectionType = document.getElementById('sectionType');
+                const sectionDept = document.getElementById('sectionDept');
+
+                function toggleSections() {
+                    if (modeSelected.checked) {
+                        sectionSelected.style.display = 'block';
+                        sectionType.style.display = 'none';
+                        sectionDept.style.display = 'none';
+                    } else if (modeType.checked) {
+                        sectionSelected.style.display = 'none';
+                        sectionType.style.display = 'block';
+                        sectionDept.style.display = 'none';
+                    } else if (modeDept.checked) {
+                        sectionSelected.style.display = 'none';
+                        sectionType.style.display = 'none';
+                        sectionDept.style.display = 'block';
+                    }
+                }
+
+                // Attach listeners
+                document.getElementsByName('batchMode').forEach(el => {
+                    el.addEventListener('change', toggleSections);
+                });
+
+                // Select All toggle
+                const selectAll = document.getElementById('selectAll');
+                const checkboxes = document.querySelectorAll('.profile-checkbox');
+                if (selectAll) {
+                    selectAll.addEventListener('change', function() {
+                        checkboxes.forEach(cb => {
+                            cb.checked = this.checked;
+                        });
+                    });
+                }
+
+                // Initial load
+                toggleSections();
+            });
+        </script>
+    </div>
+</body>
+</html>

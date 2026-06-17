@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(${form.id == null ? 'New Template' : 'Edit Template'}, ~{::content}, 'templates')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${form.id == null ? 'Create Template' : 'Edit Template'}">Create Template</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Define primary, secondary, and text colors along with layout orientation.</p>
+            </div>
+            <div>
+                <a th:href="@{/templates}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div th:if="${error != null}" class="card" style="background-color: #fef2f2; border-color: #fca5a5; color: #b91c1c; padding: 1rem; margin-bottom: 1.5rem;">
+            <p th:text="${error}"></p>
+        </div>
+
+        <div class="card" style="max-width: 680px;">
+            <form th:action="${form.id == null ? '/templates' : '/templates/' + form.id}" 
+                  method="post" th:object="${form}">
+                <input type="hidden" th:field="*{id}">
+
+                <div class="columns-2">
+                    <div class="form-group">
+                        <label class="form-label" for="code">Template Code *</label>
+                        <input type="text" th:field="*{code}" id="code" class="form-control" placeholder="e.g. STUDENT_GOLD" required th:readonly="${form.id != null}">
+                        <div class="error-message" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="name">Template Name *</label>
+                        <input type="text" th:field="*{name}" id="name" class="form-control" placeholder="e.g. Student Gold Premium" required>
+                        <div class="error-message" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    </div>
+                </div>
+
+                <div class="columns-2">
+                    <div class="form-group">
+                        <label class="form-label" for="organizationName">Organization Name *</label>
+                        <input type="text" th:field="*{organizationName}" id="organizationName" class="form-control" placeholder="e.g. University of Science" required>
+                        <div class="error-message" th:if="${#fields.hasErrors('organizationName')}" th:errors="*{organizationName}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="layout">Layout Type *</label>
+                        <select th:field="*{layout}" id="layout" class="form-control" required>
+                            <option value="VERTICAL">VERTICAL (Portrait)</option>
+                            <option value="HORIZONTAL">HORIZONTAL (Landscape)</option>
+                        </select>
+                        <div class="error-message" th:if="${#fields.hasErrors('layout')}" th:errors="*{layout}"></div>
+                    </div>
+                </div>
+
+                <div class="columns-2">
+                    <div class="form-group">
+                        <label class="form-label" for="tagline">Tagline / Motto</label>
+                        <input type="text" th:field="*{tagline}" id="tagline" class="form-control" placeholder="e.g. Learning for Life">
+                    </div>
+                </div>
+
+                <!-- Custom Hex Colors -->
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="flex: 1;">
+                        <label class="form-label" for="primaryColor">Primary Color *</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="color" th:field="*{primaryColor}" id="primaryColor" class="form-control" style="width: 50px; height: 38px; padding: 0.2rem;" required>
+                            <input type="text" id="primaryColorHex" class="form-control" th:value="${form.primaryColor}" readonly style="background-color: #f1f5f9;">
+                        </div>
+                        <div class="error-message" th:if="${#fields.hasErrors('primaryColor')}" th:errors="*{primaryColor}"></div>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label class="form-label" for="secondaryColor">Secondary Color *</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="color" th:field="*{secondaryColor}" id="secondaryColor" class="form-control" style="width: 50px; height: 38px; padding: 0.2rem;" required>
+                            <input type="text" id="secondaryColorHex" class="form-control" th:value="${form.secondaryColor}" readonly style="background-color: #f1f5f9;">
+                        </div>
+                        <div class="error-message" th:if="${#fields.hasErrors('secondaryColor')}" th:errors="*{secondaryColor}"></div>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <label class="form-label" for="textColor">Text Color *</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="color" th:field="*{textColor}" id="textColor" class="form-control" style="width: 50px; height: 38px; padding: 0.2rem;" required>
+                            <input type="text" id="textColorHex" class="form-control" th:value="${form.textColor}" readonly style="background-color: #f1f5f9;">
+                        </div>
+                        <div class="error-message" th:if="${#fields.hasErrors('textColor')}" th:errors="*{textColor}"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" th:text="${form.id == null ? 'Save Template' : 'Update Template'}">Save Template</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // Link color inputs with text display boxes for visual consistency
+                const pickers = ['primaryColor', 'secondaryColor', 'textColor'];
+                pickers.forEach(id => {
+                    const picker = document.getElementById(id);
+                    const hexDisplay = document.getElementById(id + 'Hex');
+                    if (picker && hexDisplay) {
+                        picker.addEventListener('input', function() {
+                            hexDisplay.value = this.value;
+                        });
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

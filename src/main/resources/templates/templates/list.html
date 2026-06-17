@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Templates', ~{::content}, 'templates')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Card Templates</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Manage design colors and layout structures.</p>
+            </div>
+            <div>
+                <a th:href="@{/templates/new}" class="btn btn-primary">+ Create Template</a>
+            </div>
+        </div>
+
+        <div class="grid-cols-3">
+            <div th:each="t : ${templates}" class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                        <h3 th:text="${t.name}" style="font-size: 1.1rem; font-weight: 700;">Student Blue</h3>
+                        <span class="badge" th:classappend="${t.layout == 'HORIZONTAL' ? 'badge-employee' : 'badge-student'}" th:text="${t.layout}">VERTICAL</span>
+                    </div>
+                    
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;" th:text="'Code: ' + ${t.code}">Code: STUDENT_BLUE</p>
+                    <p style="color: var(--text-main); font-size: 0.9rem; font-weight: 500;" th:text="${t.organizationName}">University</p>
+                    <p style="color: var(--text-muted); font-style: italic; font-size: 0.8rem; margin-bottom: 1rem;" th:text="${t.tagline != null && !t.tagline.isEmpty()} ? ${t.tagline} : 'No Tagline'">Tagline</p>
+
+                    <!-- Color palette preview dots -->
+                    <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                            <div th:style="'width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); background-color: ' + ${t.primaryColor}"></div>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">Primary</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                            <div th:style="'width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); background-color: ' + ${t.secondaryColor}"></div>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">Secondary</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                            <div th:style="'width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); background-color: ' + ${t.textColor}"></div>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">Text</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
+                    <a th:href="@{/templates/{id}/edit(id=${t.id})}" class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;">Edit</a>
+                    <form th:action="@{/templates/{id}/delete(id=${t.id})}" method="post" style="flex: 1; display: inline;" onsubmit="return confirm('Are you sure you want to delete this template? Any profile using it will revert to defaults.');">
+                        <button type="submit" class="btn btn-danger" style="width: 100%; padding: 0.5rem; font-size: 0.85rem;">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(templates)}" class="card" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            No templates found. Seeding is done on startup, or you can click "Create Template" to add one.
+        </div>
+    </div>
+</body>
+</html>

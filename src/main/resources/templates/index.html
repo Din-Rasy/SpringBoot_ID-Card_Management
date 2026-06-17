@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout('Dashboard', ~{::content}, 'dashboard')}">
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Dashboard</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Welcome to the ID Card Management System dashboard.</p>
+            </div>
+            <div>
+                <a th:href="@{/profiles/new}" class="btn btn-primary">+ New Profile</a>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats Cards -->
+        <div class="grid-cols-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary-light">👥</div>
+                <div class="stat-info">
+                    <h3>Total Profiles</h3>
+                    <p th:text="${totalProfiles}">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-success-light">🎓</div>
+                <div class="stat-info">
+                    <h3>Students</h3>
+                    <p th:text="${studentCount}">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-warning-light">💼</div>
+                <div class="stat-info">
+                    <h3>Employees</h3>
+                    <p th:text="${employeeCount}">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-danger-light">👤</div>
+                <div class="stat-info">
+                    <h3>General Users</h3>
+                    <p th:text="${userCount}">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-primary-light">🎨</div>
+                <div class="stat-info">
+                    <h3>Card Themes</h3>
+                    <p th:text="${totalTemplates}">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="card">
+            <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Quick Operations</h2>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a th:href="@{/profiles/new}" class="btn btn-secondary" style="flex: 1; min-width: 200px; text-align: center; display: block; padding: 1.5rem 1rem;">
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">📝</span>
+                    <strong>Create Profile</strong>
+                    <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Register a student or employee</span>
+                </a>
+                <a th:href="@{/templates/new}" class="btn btn-secondary" style="flex: 1; min-width: 200px; text-align: center; display: block; padding: 1.5rem 1rem;">
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">🎨</span>
+                    <strong>Add Card Template</strong>
+                    <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Design custom organization layouts</span>
+                </a>
+                <a th:href="@{/batch}" class="btn btn-secondary" style="flex: 1; min-width: 200px; text-align: center; display: block; padding: 1.5rem 1rem;">
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">⚙️</span>
+                    <strong>Batch PDF Generation</strong>
+                    <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Export multiple ID cards to a single PDF</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

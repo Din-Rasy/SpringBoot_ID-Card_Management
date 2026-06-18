@@ -10,98 +10,93 @@ jobs:
   build-test-deploy:
     name: Build, Test with SQLite, and Deploy
     runs-on: self-hosted
-
+    
     env:
       SPRING_PROFILES_ACTIVE: test
       BUILD_LOG: github-actions-build-output.txt
+      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_FROM }}
+
+    defaults:
+      run:
+        shell: powershell
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Start build output file
-        shell: bash
         run: |
-          {
-            echo "# GitHub Actions Build Output"
-            echo ""
-            echo "Repository: ${{ github.repository }}"
-            echo "Branch: ${{ github.ref_name }}"
-            echo "Commit: ${{ github.sha }}"
-            echo "Actor: ${{ github.actor }}"
-            echo "Started at: $(date)"
-            echo ""
-          } > "$BUILD_LOG"
+          "# GitHub Actions Build Output" | Out-File -FilePath $env:BUILD_LOG -Encoding utf8
+          "" | Out-File -FilePath $env:BUILD_LOG -Append
+          "Repository: $env:GITHUB_REPOSITORY" | Out-File -FilePath $env:BUILD_LOG -Append
+          "Branch: $env:GITHUB_REF_NAME" | Out-File -FilePath $env:BUILD_LOG -Append
+          "Commit: $env:GITHUB_SHA" | Out-File -FilePath $env:BUILD_LOG -Append
+          "Actor: $env:GITHUB_ACTOR" | Out-File -FilePath $env:BUILD_LOG -Append
+          "Started at: $(Get-Date)" | Out-File -FilePath $env:BUILD_LOG -Append
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
+      - name: Add tools to PATH
+        run: |
+          # Add local Maven bin to path
+          echo "C:\Users\Rasy\maven\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Add Workspace directory to path so the ansible-playbook.cmd wrapper can be executed
+          echo "$env:GITHUB_WORKSPACE" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Verify environment
-        shell: bash
         run: |
-          {
-            echo ""
-            echo "===== Verify Environment ====="
-            echo "Workspace: $GITHUB_WORKSPACE"
-            echo "Java version:"
-            java -version 2>&1
-            echo ""
-            echo "Maven version:"
-            mvn -version
-            echo ""
-            echo "Git version:"
-            git --version
-            echo ""
-            echo "Ansible version:"
-            ansible --version
-          } 2>&1 | tee -a "$BUILD_LOG"
+          "===== Verify Environment =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "Workspace: $env:GITHUB_WORKSPACE" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          "Java version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          java -version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          "Maven version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          mvn -version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          
+          "Git version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          git --version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          "Ansible version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          ansible-playbook --version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Confirm SQLite test configuration
-        shell: bash
         run: |
-          {
-            echo ""
-            echo "===== Confirm SQLite Test Configuration ====="
-            echo "File: src/test/resources/application-test.properties"
-            cat src/test/resources/application-test.properties
-            echo ""
-            grep -n "jdbc:sqlite" src/test/resources/application-test.properties
-            grep -n "SQLiteDialect" src/test/resources/application-test.properties
-          } 2>&1 | tee -a "$BUILD_LOG"
+          "===== Confirm SQLite Test Configuration =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "File: src/test/resources/application-test.properties" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          Get-Content src/test/resources/application-test.properties | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          Select-String -Path src/test/resources/application-test.properties -Pattern "jdbc:sqlite" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          Select-String -Path src/test/resources/application-test.properties -Pattern "SQLiteDialect" | Tee-Object -FilePath $env:BUILD_LOG -Append
 
       - name: Build with Maven
-        shell: bash
         run: |
-          {
-            echo ""
-            echo "===== Build with Maven ====="
-            echo "Command: mvn clean package -DskipTests"
-            mvn clean package -DskipTests
-          } 2>&1 | tee -a "$BUILD_LOG"
+          "===== Build with Maven =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "Command: mvn clean package -DskipTests" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          mvn clean package -DskipTests 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Test with SQLite database
-        shell: bash
         run: |
-          {
-            echo ""
-            echo "===== Test with SQLite Database ====="
-            echo "Command: mvn clean test -Dspring.profiles.active=test"
-            mvn clean test -Dspring.profiles.active=test
-          } 2>&1 | tee -a "$BUILD_LOG"
+          "===== Test with SQLite Database =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "Command: mvn clean test -Dspring.profiles.active=test" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          mvn clean test "-Dspring.profiles.active=test" 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run Ansible playbook deploy
-        shell: bash
         run: |
-          {
-            echo ""
-            echo "===== Run Ansible Playbook Deploy ====="
-            echo "Command: ansible-playbook -i inventory.ini playbook.yml"
-            ansible-playbook -i inventory.ini playbook.yml
-          } 2>&1 | tee -a "$BUILD_LOG"
+          "===== Run Ansible Playbook Deploy =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "Command: ansible-playbook -i inventory.ini playbook.yml" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          
+          ansible-playbook -i inventory.ini playbook.yml 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload build output artifact
         if: always()
@@ -120,19 +115,20 @@ jobs:
           if-no-files-found: warn
 
       - name: Send failure email
-        if: failure()
+        if: failure() && env.SMTP_FROM != ''
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
+          server_address: ${{ env.SMTP_SERVER }}
+          server_port: ${{ env.SMTP_PORT }}
+          username: ${{ env.SMTP_USERNAME }}
+          password: ${{ env.SMTP_PASSWORD }}
           subject: "GitHub Actions Build Failed: ${{ github.repository }} - ${{ github.sha }}"
-          to: "${{ github.event.head_commit.author.email }}, srengty@gmail.com"
-          from: ${{ secrets.SMTP_FROM }}
+          to: ${{ github.event.head_commit.author.email || 'srengty@gmail.com' }}
+          cc: srengty@gmail.com
+          from: ${{ env.SMTP_FROM }}
           body: |
             GitHub Actions build failed.
-
+            
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
@@ -140,11 +136,18 @@ jobs:
             Commit author email: ${{ github.event.head_commit.author.email }}
             Workflow: ${{ github.workflow }}
             Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            CC/Notification target:
-            srengty@gmail.com
-
-            Please check the workflow logs and the github-actions-build-output artifact.
-
+            
+            Notification:
+            - Developer who committed the error
+            - CC: srengty@gmail.com
+            
+            Please check the workflow logs and github-actions-build-output artifact.
+            
             Note:
-            If the commit author email is private or unavailable, GitHub may hide it. In that case, srengty@gmail.com is still included in the notification recipients.
+            If the commit author email is private or unavailable, GitHub may hide it.
+
+      - name: Email skipped warning
+        if: failure() && env.SMTP_FROM == ''
+        run: |
+          "Build failed, but email was not sent because SMTP secrets are not configured." | Tee-Object -FilePath $env:BUILD_LOG -Append
+          "Please add SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM to GitHub Secrets." | Tee-Object -FilePath $env:BUILD_LOG -Append

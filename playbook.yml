@@ -50,6 +50,12 @@
       when: not git_dir.stat.exists
 
     # 3. Check local Git status before pull
+    - name: Discard local modifications to dynamically generated tracked files
+      command: git checkout -- ANSIBLE_SUBMISSION.md backups/A-DIN_Rasy-db-backup.sql
+      args:
+        chdir: /app
+      failed_when: false
+
     - name: Check git status
       command: git status --porcelain
       args:

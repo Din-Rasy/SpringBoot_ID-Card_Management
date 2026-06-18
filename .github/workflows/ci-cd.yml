@@ -31,12 +31,12 @@ jobs:
       - name: Start build output file
         run: |
           "# GitHub Actions Build Output" | Out-File -FilePath $env:BUILD_LOG -Encoding utf8
-          "" | Out-File -FilePath $env:BUILD_LOG -Append
-          "Repository: $env:GITHUB_REPOSITORY" | Out-File -FilePath $env:BUILD_LOG -Append
-          "Branch: $env:GITHUB_REF_NAME" | Out-File -FilePath $env:BUILD_LOG -Append
-          "Commit: $env:GITHUB_SHA" | Out-File -FilePath $env:BUILD_LOG -Append
-          "Actor: $env:GITHUB_ACTOR" | Out-File -FilePath $env:BUILD_LOG -Append
-          "Started at: $(Get-Date)" | Out-File -FilePath $env:BUILD_LOG -Append
+          "" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
+          "Repository: $env:GITHUB_REPOSITORY" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
+          "Branch: $env:GITHUB_REF_NAME" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
+          "Commit: $env:GITHUB_SHA" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
+          "Actor: $env:GITHUB_ACTOR" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
+          "Started at: $(Get-Date)" | Out-File -FilePath $env:BUILD_LOG -Append -Encoding utf8
 
       - name: Add tools to PATH
         run: |
@@ -47,56 +47,107 @@ jobs:
 
       - name: Verify environment
         run: |
-          "===== Verify Environment =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "Workspace: $env:GITHUB_WORKSPACE" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          $ErrorActionPreference = 'Continue'
           
-          "Java version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          java -version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
+          function Log-And-Run($title, $exec_block) {
+              Write-Output $title
+              Add-Content -Path $env:BUILD_LOG -Value $title -Encoding UTF8
+              $out = Invoke-Command -ScriptBlock $exec_block 2>&1
+              $out | Out-Host
+              $out | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          }
           
-          "Maven version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          mvn -version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Log-And-Run "===== Verify Environment =====" { Write-Output "Workspace: $env:GITHUB_WORKSPACE" }
+          Log-And-Run "Java version:" { java -version }
+          Log-And-Run "Maven version:" { mvn -version }
+          Log-And-Run "Git version:" { git --version }
+          Log-And-Run "Ansible version:" { ansible-playbook --version }
           
-          "Git version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          git --version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          
-          "Ansible version:" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          ansible-playbook --version 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Check exit codes manually for critical tools to fail the step if missing
+          $ErrorActionPreference = 'Stop'
+          mvn -version > $null 2>&1
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Maven is not available!"
+              exit 1
+          }
+          ansible-playbook --version > $null 2>&1
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Ansible is not available!"
+              exit 1
+          }
 
       - name: Confirm SQLite test configuration
         run: |
-          "===== Confirm SQLite Test Configuration =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "File: src/test/resources/application-test.properties" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          $ErrorActionPreference = 'Continue'
           
-          Get-Content src/test/resources/application-test.properties | Tee-Object -FilePath $env:BUILD_LOG -Append
+          function Log-And-Run($title, $exec_block) {
+              Write-Output $title
+              Add-Content -Path $env:BUILD_LOG -Value $title -Encoding UTF8
+              $out = Invoke-Command -ScriptBlock $exec_block 2>&1
+              $out | Out-Host
+              $out | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          }
           
-          Select-String -Path src/test/resources/application-test.properties -Pattern "jdbc:sqlite" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          Select-String -Path src/test/resources/application-test.properties -Pattern "SQLiteDialect" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          Log-And-Run "===== Confirm SQLite Test Configuration =====" { Write-Output "File: src/test/resources/application-test.properties" }
+          Log-And-Run "Properties Content:" { Get-Content src/test/resources/application-test.properties }
+          Log-And-Run "SQLite references:" {
+              Select-String -Path src/test/resources/application-test.properties -Pattern "jdbc:sqlite"
+              Select-String -Path src/test/resources/application-test.properties -Pattern "SQLiteDialect"
+          }
 
       - name: Build with Maven
         run: |
-          "===== Build with Maven =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "Command: mvn clean package -DskipTests" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          $ErrorActionPreference = 'Continue'
+          Write-Output "===== Build with Maven ====="
+          Add-Content -Path $env:BUILD_LOG -Value "===== Build with Maven =====" -Encoding UTF8
+          Write-Output "Command: mvn clean package -DskipTests"
+          Add-Content -Path $env:BUILD_LOG -Value "Command: mvn clean package -DskipTests" -Encoding UTF8
           
-          mvn clean package -DskipTests 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          mvn clean package -DskipTests 2>&1 | ForEach-Object {
+              $_ | Out-Host
+              $_ | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Maven build failed!"
+              exit $LASTEXITCODE
+          }
 
       - name: Test with SQLite database
         run: |
-          "===== Test with SQLite Database =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "Command: mvn clean test -Dspring.profiles.active=test" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          $ErrorActionPreference = 'Continue'
+          Write-Output "===== Test with SQLite Database ====="
+          Add-Content -Path $env:BUILD_LOG -Value "===== Test with SQLite Database =====" -Encoding UTF8
+          Write-Output "Command: mvn clean test -Dspring.profiles.active=test"
+          Add-Content -Path $env:BUILD_LOG -Value "Command: mvn clean test -Dspring.profiles.active=test" -Encoding UTF8
           
-          mvn clean test "-Dspring.profiles.active=test" 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          mvn clean test "-Dspring.profiles.active=test" 2>&1 | ForEach-Object {
+              $_ | Out-Host
+              $_ | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Maven tests failed!"
+              exit $LASTEXITCODE
+          }
 
       - name: Run Ansible playbook deploy
         run: |
-          "===== Run Ansible Playbook Deploy =====" | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "Command: ansible-playbook -i inventory.ini playbook.yml" | Tee-Object -FilePath $env:BUILD_LOG -Append
+          $ErrorActionPreference = 'Continue'
+          Write-Output "===== Run Ansible Playbook Deploy ====="
+          Add-Content -Path $env:BUILD_LOG -Value "===== Run Ansible Playbook Deploy =====" -Encoding UTF8
+          Write-Output "Command: ansible-playbook -i inventory.ini playbook.yml"
+          Add-Content -Path $env:BUILD_LOG -Value "Command: ansible-playbook -i inventory.ini playbook.yml" -Encoding UTF8
           
-          ansible-playbook -i inventory.ini playbook.yml 2>&1 | Tee-Object -FilePath $env:BUILD_LOG -Append
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ansible-playbook -i inventory.ini playbook.yml 2>&1 | ForEach-Object {
+              $_ | Out-Host
+              $_ | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Ansible deployment failed!"
+              exit $LASTEXITCODE
+          }
 
       - name: Upload build output artifact
         if: always()

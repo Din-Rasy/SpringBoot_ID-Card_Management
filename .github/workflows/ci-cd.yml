@@ -49,29 +49,57 @@ jobs:
         run: |
           $ErrorActionPreference = 'Continue'
           
-          function Log-And-Run($title, $exec_block) {
-              Write-Output $title
-              Add-Content -Path $env:BUILD_LOG -Value $title -Encoding UTF8
-              $out = Invoke-Command -ScriptBlock $exec_block 2>&1
-              $out | Out-Host
-              $out | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          # Write section header
+          Write-Output "===== Verify Environment ====="
+          Add-Content -Path $env:BUILD_LOG -Value "===== Verify Environment =====" -Encoding UTF8
+          
+          Write-Output "Workspace: $env:GITHUB_WORKSPACE"
+          Add-Content -Path $env:BUILD_LOG -Value "Workspace: $env:GITHUB_WORKSPACE" -Encoding UTF8
+          
+          # Java version
+          Write-Output "Java version:"
+          Add-Content -Path $env:BUILD_LOG -Value "Java version:" -Encoding UTF8
+          java -version 2> temp_ver.txt
+          Get-Content temp_ver.txt | ForEach-Object {
+              Write-Output $_
+              Add-Content -Path $env:BUILD_LOG -Value $_ -Encoding UTF8
           }
           
-          Log-And-Run "===== Verify Environment =====" { Write-Output "Workspace: $env:GITHUB_WORKSPACE" }
-          Log-And-Run "Java version:" { java -version }
-          Log-And-Run "Maven version:" { mvn -version }
-          Log-And-Run "Git version:" { git --version }
-          Log-And-Run "Ansible version:" { ansible-playbook --version }
+          # Maven version
+          Write-Output "Maven version:"
+          Add-Content -Path $env:BUILD_LOG -Value "Maven version:" -Encoding UTF8
+          mvn -version 2> temp_ver.txt
+          Get-Content temp_ver.txt | ForEach-Object {
+              Write-Output $_
+              Add-Content -Path $env:BUILD_LOG -Value $_ -Encoding UTF8
+          }
           
-          # Check exit codes manually for critical tools to fail the step if missing
-          $ErrorActionPreference = 'Stop'
-          mvn -version > $null 2>&1
-          if ($LASTEXITCODE -ne 0) {
+          # Git version
+          Write-Output "Git version:"
+          Add-Content -Path $env:BUILD_LOG -Value "Git version:" -Encoding UTF8
+          git --version 2> temp_ver.txt
+          Get-Content temp_ver.txt | ForEach-Object {
+              Write-Output $_
+              Add-Content -Path $env:BUILD_LOG -Value $_ -Encoding UTF8
+          }
+          
+          # Ansible version
+          Write-Output "Ansible version:"
+          Add-Content -Path $env:BUILD_LOG -Value "Ansible version:" -Encoding UTF8
+          ansible-playbook --version 2> temp_ver.txt
+          Get-Content temp_ver.txt | ForEach-Object {
+              Write-Output $_
+              Add-Content -Path $env:BUILD_LOG -Value $_ -Encoding UTF8
+          }
+          
+          if (Test-Path temp_ver.txt) { Remove-Item temp_ver.txt }
+          
+          # Check availability of critical tools
+          if (-not (Get-Command mvn -ErrorAction SilentlyContinue)) {
               Write-Error "Maven is not available!"
               exit 1
           }
-          ansible-playbook --version > $null 2>&1
-          if ($LASTEXITCODE -ne 0) {
+          if (-not (Get-Command ansible-playbook -ErrorAction SilentlyContinue)) {
               Write-Error "Ansible is not available!"
               exit 1
           }
@@ -80,19 +108,23 @@ jobs:
         run: |
           $ErrorActionPreference = 'Continue'
           
-          function Log-And-Run($title, $exec_block) {
-              Write-Output $title
-              Add-Content -Path $env:BUILD_LOG -Value $title -Encoding UTF8
-              $out = Invoke-Command -ScriptBlock $exec_block 2>&1
-              $out | Out-Host
-              $out | Add-Content -Path $env:BUILD_LOG -Encoding UTF8
+          Write-Output "===== Confirm SQLite Test Configuration ====="
+          Add-Content -Path $env:BUILD_LOG -Value "===== Confirm SQLite Test Configuration =====" -Encoding UTF8
+          
+          Write-Output "File: src/test/resources/application-test.properties"
+          Add-Content -Path $env:BUILD_LOG -Value "File: src/test/resources/application-test.properties" -Encoding UTF8
+          
+          Get-Content src/test/resources/application-test.properties | ForEach-Object {
+              Write-Output $_
+              Add-Content -Path $env:BUILD_LOG -Value $_ -Encoding UTF8
           }
           
-          Log-And-Run "===== Confirm SQLite Test Configuration =====" { Write-Output "File: src/test/resources/application-test.properties" }
-          Log-And-Run "Properties Content:" { Get-Content src/test/resources/application-test.properties }
-          Log-And-Run "SQLite references:" {
-              Select-String -Path src/test/resources/application-test.properties -Pattern "jdbc:sqlite"
-              Select-String -Path src/test/resources/application-test.properties -Pattern "SQLiteDialect"
+          Write-Output "SQLite references:"
+          Add-Content -Path $env:BUILD_LOG -Value "SQLite references:" -Encoding UTF8
+          
+          Select-String -Path src/test/resources/application-test.properties -Pattern "jdbc:sqlite", "SQLiteDialect" | ForEach-Object {
+              Write-Output $_.Line
+              Add-Content -Path $env:BUILD_LOG -Value $_.Line -Encoding UTF8
           }
 
       - name: Build with Maven
@@ -200,5 +232,7 @@ jobs:
       - name: Email skipped warning
         if: failure() && env.SMTP_FROM == ''
         run: |
-          "Build failed, but email was not sent because SMTP secrets are not configured." | Tee-Object -FilePath $env:BUILD_LOG -Append
-          "Please add SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM to GitHub Secrets." | Tee-Object -FilePath $env:BUILD_LOG -Append
+          Write-Output "Build failed, but email was not sent because SMTP secrets are not configured."
+          Add-Content -Path $env:BUILD_LOG -Value "Build failed, but email was not sent because SMTP secrets are not configured." -Encoding UTF8
+          Write-Output "Please add SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM to GitHub Secrets."
+          Add-Content -Path $env:BUILD_LOG -Value "Please add SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM to GitHub Secrets." -Encoding UTF8
